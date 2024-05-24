@@ -1,0 +1,30 @@
+name: Deploy Node Application
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Login to docker hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}       
+      - name: Build docker image
+        run: docker build -t nirmalganesh15/employee-service-app .  
+      - name: Publish image to docker hub
+        run: docker push nirmalganesh15/employee-service-app:latest
+        
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Pull image from docker hub
+        run: docker pull nirmalganesh15/employee-service-app:latest
+      - name: Delete old container
+        run: docker rm -f employee-service-app-container  
+      - name: Run docker container
+        run: docker run -d -p 3000:3000 --name employee-service-app-container nirmalganesh15/employee-service-app       
